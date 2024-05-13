@@ -1,3 +1,3 @@
 # tox1cozz.eth
 
-Missing description12
+Missing description
