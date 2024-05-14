@@ -13,7 +13,6 @@ public class ToxicConfig extends AsyncJSONConfig<ToxicConfig.Data> {
     @SneakyThrows
     private ToxicConfig() {
         super(Paths.get("./config/config.json"), 600_000L, Data.class, Data::new);
-        this.init();
     }
 
     @NonNull

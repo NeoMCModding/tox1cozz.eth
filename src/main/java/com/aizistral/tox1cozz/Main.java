@@ -19,6 +19,14 @@ public final class Main {
     static {
         LOGGER.log("Starting up the ToxicBot...");
 
+        try {
+            ToxicConfig.INSTANCE.init();
+            ToxicConfig.INSTANCE.forceSave();
+            Localization.load();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
         String token = ToxicConfig.INSTANCE.getAccessToken();
 
         if (token.isEmpty())
@@ -30,6 +38,9 @@ public final class Main {
                 GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS,
                 GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS
                 );
+
+        String activity = Localization.translate("activity.watching");
+        System.out.println("Activity: " + activity);
 
         builder.setActivity(Activity.watching(Localization.translate("activity.watching")));
 

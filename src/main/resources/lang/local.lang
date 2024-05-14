@@ -1,1 +1,12 @@
-activity.watching=the stars
+activity.watching=курс тонкоина
+
+cmd.ping.desc=Тыкнуть на предмет признаков жизни
+cmd.version.desc=Проверить версию токсикоза
+cmd.uptime.desc=Проверить время работы токсикоза
+
+cmd.ping.reply1=По голове себе пингани <:peepo_clown:1238880262729895996>
+cmd.ping.reply2=Ладно бро я померял пинг: %d ms
+
+cmd.version.reply=Я существую вне времени и пространства... но в манифесте написано что у меня версия **%s** <:peepo_studying:1238913487523155998>
+
+cmd.uptime.reply=Я остаюсь в трезвом состоянии вот уже %1$s часов, %2$s минут и %3$s секунд <:peepo_minecraft:1238915267371864226>

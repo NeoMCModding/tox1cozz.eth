@@ -9,11 +9,13 @@ import java.util.stream.Collectors;
 import com.aizistral.tox1cozz.config.ToxicConfig;
 import com.aizistral.tox1cozz.utils.StandardLogger;
 import com.aizistral.tox1cozz.config.Localization;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
+import lombok.var;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
@@ -28,6 +30,7 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.utils.messages.MessagePollData;
 
 @Getter
 public class ToxicBot extends ListenerAdapter {
@@ -52,6 +55,12 @@ public class ToxicBot extends ListenerAdapter {
         this.config = ToxicConfig.INSTANCE;
         this.startupTime = System.currentTimeMillis();
 
+        this.jda.updateCommands().addCommands(
+                Commands.slash("ping", Localization.translate("cmd.ping.desc")),
+                Commands.slash("version", Localization.translate("cmd.version.desc")),
+                Commands.slash("uptime", Localization.translate("cmd.uptime.desc"))
+                ).queue();
+
         Runtime.getRuntime().addShutdownHook(new Thread(this::trySave));
 
         this.jda.awaitReady();
@@ -59,6 +68,34 @@ public class ToxicBot extends ListenerAdapter {
 
     private void awake() {
         this.jda.addEventListener(this);
+    }
+
+    @Override
+    public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        String command = event.getName();
+
+        if (command.equals("ping")) {
+            long time = System.currentTimeMillis();
+
+            event.reply(Localization.translate("cmd.ping.reply1"))
+            .flatMap(v -> event.getHook().editOriginalFormat(
+                    Localization.translate("cmd.ping.reply2", System.currentTimeMillis() - time)
+                    )).queue();
+        } else if (command.equals("version")) {
+            event.reply(Localization.translate("cmd.version.reply", this.getVersion())).queue();
+        } else if (command.equals("uptime")) {
+            long uptime = System.currentTimeMillis() - this.startupTime;
+
+            long hrs = TimeUnit.MILLISECONDS.toHours(uptime);
+            uptime -= hrs * 60L * 60L * 1000L;
+            long mins = TimeUnit.MILLISECONDS.toMinutes(uptime);
+            uptime -= mins * 60L * 1000L;
+            long secs = TimeUnit.MILLISECONDS.toSeconds(uptime);
+
+            event.reply(Localization.translate("cmd.uptime.reply", hrs, mins, secs)).queue();
+        } else {
+            event.reply("Бро ты галлюцинируешь, нет такой команды");
+        }
     }
 
 
@@ -72,7 +109,7 @@ public class ToxicBot extends ListenerAdapter {
     }
 
     public void terminate(Throwable reason) {
-        LOGGER.error("Infinite Machine has encountered a fatal error:", reason);
+        LOGGER.error("Toxic Bot has encountered a fatal error:", reason);
         LOGGER.error("Initiating termination sequence...");
         this.trySave();
 
@@ -81,7 +118,7 @@ public class ToxicBot extends ListenerAdapter {
     }
 
     public void shutdown() {
-        LOGGER.log("Infinite Machine is shutting down...");
+        LOGGER.log("Toxic Bot is shutting down...");
         this.trySave();
 
         LOGGER.log("Database saved, calling system exit.");
