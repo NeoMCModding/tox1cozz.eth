@@ -19,3 +19,6 @@ cmd.sendmsg.option.reference=ID сообщения на которое отве�
 cmd.sendmsg.reply.badChannel=В этом типа канала нельзя отправлять сообщения, долбоёб <:peepo_clown:1238880262729895996>
 cmd.sendmsg.reply.success=Я отправил бро <:peepo_minecraft:1238915267371864226>
 cmd.sendmsg.reply.fail=Кажется шото пошло по пизде...
+
+cmd.sendmsg.log.title=Кто-то заюзал /sendmsg
+cmd.sendmsg.log.content=**Юзер:** <@%s> (%s)\n**Текст сообщения:** %s

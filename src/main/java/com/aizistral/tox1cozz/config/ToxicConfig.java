@@ -10,7 +10,6 @@ import lombok.SneakyThrows;
 public class ToxicConfig extends AsyncJSONConfig<ToxicConfig.Data> {
     public static final ToxicConfig INSTANCE = new ToxicConfig();
 
-    @SneakyThrows
     private ToxicConfig() {
         super(Paths.get("./config/config.json"), 600_000L, Data.class, Data::new);
     }
@@ -25,9 +24,20 @@ public class ToxicConfig extends AsyncJSONConfig<ToxicConfig.Data> {
         }
     }
 
+    @NonNull
+    public long getLogsChannelID() {
+        try {
+            this.readLock.lock();
+            return this.getData().logsChannel;
+        } finally {
+            this.readLock.unlock();
+        }
+    }
+
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     static final class Data {
         private String accessToken = "";
+        private long logsChannel = 1238940494130581586L;
     }
 
 }

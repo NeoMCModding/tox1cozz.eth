@@ -1,5 +1,6 @@
 package com.aizistral.tox1cozz;
 
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
@@ -16,9 +17,11 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
 import lombok.var;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
@@ -141,6 +144,23 @@ public class ToxicBot extends ListenerAdapter {
             }
 
             LOGGER.log("User %s used /sendmsg with message: %s", event.getUser().getEffectiveName(), message);
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder
+            .setTitle(Localization.translate("cmd.sendmsg.log.title"))
+            .appendDescription(
+                    Localization.translate(
+                            "cmd.sendmsg.log.content",
+                            event.getUser().getId(),
+                            event.getUser().getEffectiveName(),
+                            message
+                            )
+                    )
+            .setColor(new Color(0, 100, 85));
+
+            event.getGuild().getTextChannelById(ToxicConfig.INSTANCE.getLogsChannelID())
+            .sendMessageEmbeds(builder.build()).queue();
 
             action.queue(msg -> {
                 event.reply(Localization.translate("cmd.sendmsg.reply.success")).setEphemeral(true).queue();
