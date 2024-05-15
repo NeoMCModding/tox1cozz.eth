@@ -39,9 +39,6 @@ public final class Main {
                 GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS
                 );
 
-        String activity = Localization.translate("activity.watching");
-        System.out.println("Activity: " + activity);
-
         builder.setActivity(Activity.watching(Localization.translate("activity.watching")));
 
         JDA = builder.build();

@@ -3,11 +3,19 @@ package com.aizistral.tox1cozz;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.aizistral.tox1cozz.config.ToxicConfig;
+import com.aizistral.tox1cozz.feature.challenge.ButtonType;
+import com.aizistral.tox1cozz.feature.challenge.Challenge;
+import com.aizistral.tox1cozz.feature.challenge.ChallengeHandler;
+import com.aizistral.tox1cozz.feature.challenge.ChallengeList;
+import com.aizistral.tox1cozz.feature.challenge.ChallengeOutcome;
+import com.aizistral.tox1cozz.utils.SimpleDuration;
 import com.aizistral.tox1cozz.utils.StandardLogger;
 import com.aizistral.tox1cozz.config.Localization;
 import com.google.common.base.Optional;
@@ -19,21 +27,32 @@ import lombok.val;
 import lombok.var;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.exceptions.HierarchyException;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.components.LayoutComponent;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessagePollData;
 
@@ -79,6 +98,16 @@ public class ToxicBot extends ListenerAdapter {
                         OptionType.STRING, "reference",
                         Localization.translate("cmd.sendmsg.option.reference"),
                         false
+                        ),
+                Commands.slash("challenge", Localization.translate("cmd.challenge.desc"))
+                .addOption(
+                        OptionType.USER, "user",
+                        Localization.translate("cmd.challenge.option.user"),
+                        true
+                        )
+                .addOption(OptionType.STRING, "duration",
+                        Localization.translate("cmd.challenge.option.duration"),
+                        false
                         )
                 ).queue();
 
@@ -92,83 +121,104 @@ public class ToxicBot extends ListenerAdapter {
     }
 
     private void awake() {
-        this.jda.addEventListener(this);
+        this.jda.addEventListener(this, ChallengeHandler.INSTANCE);
+    }
+
+
+
+    private void handlePing(SlashCommandInteractionEvent event) {
+        long time = System.currentTimeMillis();
+
+        event.reply(Localization.translate("cmd.ping.reply1"))
+        .flatMap(v -> event.getHook().editOriginalFormat(
+                Localization.translate("cmd.ping.reply2", System.currentTimeMillis() - time)
+                )).queue();
+    }
+
+    private void handleVersion(SlashCommandInteraction event) {
+        event.reply(Localization.translate("cmd.version.reply", this.getVersion())).queue();
+    }
+
+    private void handleUptime(SlashCommandInteraction event) {
+        long uptime = System.currentTimeMillis() - this.startupTime;
+
+        long hrs = TimeUnit.MILLISECONDS.toHours(uptime);
+        uptime -= hrs * 60L * 60L * 1000L;
+        long mins = TimeUnit.MILLISECONDS.toMinutes(uptime);
+        uptime -= mins * 60L * 1000L;
+        long secs = TimeUnit.MILLISECONDS.toSeconds(uptime);
+
+        event.reply(Localization.translate("cmd.uptime.reply", hrs, mins, secs)).queue();
+    }
+
+    private void handleSendMsg(SlashCommandInteraction event) {
+        var argChannel = event.getOption("channel", OptionMapping::getAsChannel);
+        val reference = event.getOption("reference", OptionMapping::getAsString);
+        val message = event.getOption("message", OptionMapping::getAsString);
+
+        MessageChannel channel;
+
+        if (argChannel != null) {
+            if (argChannel instanceof MessageChannel) {
+                channel = (MessageChannel) argChannel;
+            } else {
+                event.reply(Localization.translate("cmd.sendmsg.reply.badChannel")).setEphemeral(true)
+                .queue();
+                return;
+            }
+        } else {
+            channel = event.getChannel();
+        }
+
+        var action = channel.sendMessage(message);
+
+        if (reference != null) {
+            action.setMessageReference(reference);
+        }
+
+        LOGGER.log("User %s used /sendmsg with message: %s", event.getUser().getEffectiveName(), message);
+
+        EmbedBuilder builder = new EmbedBuilder();
+
+        builder
+        .setTitle(Localization.translate("cmd.sendmsg.log.title"))
+        .appendDescription(
+                Localization.translate(
+                        "cmd.sendmsg.log.content",
+                        event.getUser().getId(),
+                        event.getUser().getEffectiveName(),
+                        message
+                        )
+                )
+        .setColor(new Color(0, 100, 85));
+
+        event.getGuild().getTextChannelById(ToxicConfig.INSTANCE.getLogsChannelID())
+        .sendMessageEmbeds(builder.build()).queue();
+
+        action.queue(msg -> {
+            event.reply(Localization.translate("cmd.sendmsg.reply.success")).setEphemeral(true).queue();
+        }, error -> {
+            event.reply(Localization.translate("cmd.sendmsg.reply.fail")).setEphemeral(true).queue();
+        });
     }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String command = event.getName();
 
-        if (command.equals("ping")) {
-            long time = System.currentTimeMillis();
-
-            event.reply(Localization.translate("cmd.ping.reply1"))
-            .flatMap(v -> event.getHook().editOriginalFormat(
-                    Localization.translate("cmd.ping.reply2", System.currentTimeMillis() - time)
-                    )).queue();
-        } else if (command.equals("version")) {
-            event.reply(Localization.translate("cmd.version.reply", this.getVersion())).queue();
-        } else if (command.equals("uptime")) {
-            long uptime = System.currentTimeMillis() - this.startupTime;
-
-            long hrs = TimeUnit.MILLISECONDS.toHours(uptime);
-            uptime -= hrs * 60L * 60L * 1000L;
-            long mins = TimeUnit.MILLISECONDS.toMinutes(uptime);
-            uptime -= mins * 60L * 1000L;
-            long secs = TimeUnit.MILLISECONDS.toSeconds(uptime);
-
-            event.reply(Localization.translate("cmd.uptime.reply", hrs, mins, secs)).queue();
-        } else if (command.equals("sendmsg")) {
-            var argChannel = event.getOption("channel", OptionMapping::getAsChannel);
-            val reference = event.getOption("reference", OptionMapping::getAsString);
-            val message = event.getOption("message", OptionMapping::getAsString);
-
-            MessageChannel channel;
-
-            if (argChannel != null) {
-                if (argChannel instanceof MessageChannel) {
-                    channel = (MessageChannel) argChannel;
-                } else {
-                    event.reply(Localization.translate("cmd.sendmsg.reply.badChannel")).setEphemeral(true)
-                    .queue();
-                    return;
-                }
-            } else {
-                channel = event.getChannel();
-            }
-
-            var action = channel.sendMessage(message);
-
-            if (reference != null) {
-                action.setMessageReference(reference);
-            }
-
-            LOGGER.log("User %s used /sendmsg with message: %s", event.getUser().getEffectiveName(), message);
-
-            EmbedBuilder builder = new EmbedBuilder();
-
-            builder
-            .setTitle(Localization.translate("cmd.sendmsg.log.title"))
-            .appendDescription(
-                    Localization.translate(
-                            "cmd.sendmsg.log.content",
-                            event.getUser().getId(),
-                            event.getUser().getEffectiveName(),
-                            message
-                            )
-                    )
-            .setColor(new Color(0, 100, 85));
-
-            event.getGuild().getTextChannelById(ToxicConfig.INSTANCE.getLogsChannelID())
-            .sendMessageEmbeds(builder.build()).queue();
-
-            action.queue(msg -> {
-                event.reply(Localization.translate("cmd.sendmsg.reply.success")).setEphemeral(true).queue();
-            }, error -> {
-                event.reply(Localization.translate("cmd.sendmsg.reply.fail")).setEphemeral(true).queue();
-            });
-        } else {
-            event.reply("Бро ты галлюцинируешь, нет такой команды");
+        switch (command) {
+        case "ping":
+            this.handlePing(event);
+            break;
+        case "version":
+            this.handleVersion(event);
+            break;
+        case "uptime":
+            this.handleUptime(event);
+            break;
+        case "sendmsg":
+            this.handleSendMsg(event);
+            break;
         }
     }
 
