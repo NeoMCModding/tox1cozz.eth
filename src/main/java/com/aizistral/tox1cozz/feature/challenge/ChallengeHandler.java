@@ -93,7 +93,7 @@ public class ChallengeHandler extends ListenerAdapter {
                         .queue(success -> {
                             hook.sendMessage(this.localizeOutcome(challenger, challenged, winner, loser,
                                     punishment, true))
-                            .setFiles(FileUpload.fromData(Path.of("../assets/terpila.png")))
+                            .setFiles(FileUpload.fromData(this.getOutcomeAttachment(true)))
                             .queue();
                         }, failure -> {
                             hook.sendMessage(this.localizeOutcome(challenger, challenged, winner, loser,
@@ -122,6 +122,10 @@ public class ChallengeHandler extends ListenerAdapter {
             event.editComponents(msg.getComponents().stream().map(LayoutComponent::asDisabled)
                     .collect(Collectors.toList())).queue();
         }
+    }
+
+    private Path getOutcomeAttachment(boolean success) {
+        return Math.random() > 0.5 ? Paths.get("../assets/terpila.jpg") : Paths.get("../assets/uhodit.jpg");
     }
 
     private String localizeOutcome(Member challenger, Member challenged, Member winner,
