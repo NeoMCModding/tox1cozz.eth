@@ -26,7 +26,6 @@ public class SimpleDuration {
             long time = Long.parseLong(str.substring(0, str.length() - 1));
             String unit = str.substring(str.length() - 1, str.length()).toLowerCase();
 
-            System.out.println("time: " + time + ", unit: " + unit);
             TimeUnit timeUnit;
 
             switch (unit) {
