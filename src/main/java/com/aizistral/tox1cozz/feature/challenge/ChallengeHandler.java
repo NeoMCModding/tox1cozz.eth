@@ -1,8 +1,10 @@
 package com.aizistral.tox1cozz.feature.challenge;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.aizistral.tox1cozz.config.Localization;
 import com.aizistral.tox1cozz.utils.SimpleDuration;
@@ -10,6 +12,7 @@ import com.aizistral.tox1cozz.utils.StandardLogger;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.val;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -50,7 +53,11 @@ public class ChallengeHandler extends ListenerAdapter {
             return;
         }
 
-        this.challenges.findChallenge(challengeID).ifPresentOrElse(challenge -> {
+        val optionalChallenge = this.challenges.findChallenge(challengeID);
+
+        if (optionalChallenge.isPresent()) {
+            val challenge = optionalChallenge.get();
+
             if (challenge.getChallengedID() != event.getUser().getIdLong()) {
                 event.reply(Localization.translate("cmd.challenge.interaction.badUser"))
                 .setEphemeral(true).queue();
@@ -106,15 +113,14 @@ public class ChallengeHandler extends ListenerAdapter {
                 LOGGER.error("Failed to retrieve challenge members:", error);
                 event.reply(Localization.translate("cmd.challenge.interaction.memberError")).queue();
             });
-        }, () -> {
+        } else {
             hook.sendMessage(Localization.translate("cmd.challenge.interaction.challengeNotFound"))
             .setEphemeral(true).queue();
-        });
-
+        }
 
         if (!event.isAcknowledged()) {
-            event.editComponents(msg.getComponents().stream().map(LayoutComponent::asDisabled).toList())
-            .queue();
+            event.editComponents(msg.getComponents().stream().map(LayoutComponent::asDisabled)
+                    .collect(Collectors.toList())).queue();
         }
     }
 
