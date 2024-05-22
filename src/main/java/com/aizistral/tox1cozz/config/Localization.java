@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class Localization {
         if (stream == null)
             throw new IOException("Localization file not found");
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             String line = null;
 
             while ((line = reader.readLine()) != null) {
