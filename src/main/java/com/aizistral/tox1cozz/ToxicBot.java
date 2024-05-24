@@ -205,7 +205,8 @@ public class ToxicBot extends ListenerAdapter {
     }
 
     private void handleAbout(SlashCommandInteractionEvent event) {
-        event.reply(Localization.translate("cmd.about.reply")).queue();
+        event.reply(Localization.translate("cmd.about.reply")).setAllowedMentions(ImmutableList.of())
+        .queue();
     }
 
     @Override
