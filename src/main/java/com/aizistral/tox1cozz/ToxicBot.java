@@ -98,17 +98,17 @@ public class ToxicBot extends ListenerAdapter {
                         OptionType.STRING, "reference",
                         Localization.translate("cmd.sendmsg.option.reference"),
                         false
-                        ),
-                Commands.slash("challenge", Localization.translate("cmd.challenge.desc"))
-                .addOption(
-                        OptionType.USER, "user",
-                        Localization.translate("cmd.challenge.option.user"),
-                        true
                         )
-                .addOption(OptionType.STRING, "duration",
-                        Localization.translate("cmd.challenge.option.duration"),
-                        false
-                        )
+                //                Commands.slash("challenge", Localization.translate("cmd.challenge.desc"))
+                //                .addOption(
+                //                        OptionType.USER, "user",
+                //                        Localization.translate("cmd.challenge.option.user"),
+                //                        true
+                //                        )
+                //                .addOption(OptionType.STRING, "duration",
+                //                        Localization.translate("cmd.challenge.option.duration"),
+                //                        false
+                //                        )
                 ).queue();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::trySave));
@@ -121,7 +121,8 @@ public class ToxicBot extends ListenerAdapter {
     }
 
     private void awake() {
-        this.jda.addEventListener(this, ChallengeHandler.INSTANCE);
+        this.jda.addEventListener(this);
+        //        this.jda.addEventListener(ChallengeHandler.INSTANCE);
     }
 
 
