@@ -80,6 +80,7 @@ public class ToxicBot extends ListenerAdapter {
         this.startupTime = System.currentTimeMillis();
 
         this.jda.updateCommands().addCommands(
+                Commands.slash("about", Localization.translate("cmd.about.desc")),
                 Commands.slash("ping", Localization.translate("cmd.ping.desc")),
                 Commands.slash("version", Localization.translate("cmd.version.desc")),
                 Commands.slash("uptime", Localization.translate("cmd.uptime.desc")),
@@ -203,11 +204,18 @@ public class ToxicBot extends ListenerAdapter {
         });
     }
 
+    private void handleAbout(SlashCommandInteractionEvent event) {
+        event.reply(Localization.translate("cmd.about.reply")).queue();
+    }
+
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String command = event.getName();
 
         switch (command) {
+        case "about":
+            this.handleAbout(event);
+            break;
         case "ping":
             this.handlePing(event);
             break;
