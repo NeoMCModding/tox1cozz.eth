@@ -15,6 +15,7 @@ import com.aizistral.tox1cozz.feature.challenge.Challenge;
 import com.aizistral.tox1cozz.feature.challenge.ChallengeHandler;
 import com.aizistral.tox1cozz.feature.challenge.ChallengeList;
 import com.aizistral.tox1cozz.feature.challenge.ChallengeOutcome;
+import com.aizistral.tox1cozz.feature.typing.TypingHandler;
 import com.aizistral.tox1cozz.utils.SimpleDuration;
 import com.aizistral.tox1cozz.utils.StandardLogger;
 import com.aizistral.tox1cozz.config.Localization;
@@ -116,16 +117,16 @@ public class ToxicBot extends ListenerAdapter {
 
         this.jda.awaitReady();
 
-        var channel = this.jda.getGuildChannelById(1238896261159981116L);
+        var channel = this.jda.getTextChannelById(1238848289454035018L);
 
-        //((TextChannel) channel).sendMessage("Меньше смазки потребуется").queue();
+        TypingHandler handler = new TypingHandler(channel);
+        handler.start();
     }
 
     private void awake() {
         this.jda.addEventListener(this);
         //        this.jda.addEventListener(ChallengeHandler.INSTANCE);
     }
-
 
 
     private void handlePing(SlashCommandInteractionEvent event) {
